@@ -1,0 +1,24 @@
+name: Dev to Staging
+
+on:
+  push:
+    branches: [staging]
+
+jobs:
+  full-test-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: pip install -r requirements.txt
+
+      - name: Run full test suite
+        working-directory: ./backend
+        run: pytest tests/ -v
