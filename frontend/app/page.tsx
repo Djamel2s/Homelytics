@@ -1,66 +1,85 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+
+import { useState } from "react";
+
+type FormData = {
+  median_income: number;
+  house_age: number;
+  avg_rooms: number;
+  avg_bedrooms: number;
+  population: number;
+  avg_occupancy: number;
+  latitude: number;
+  longitude: number;
+};
+
+const initialForm: FormData = {
+  median_income: 5,
+  house_age: 20,
+  avg_rooms: 5,
+  avg_bedrooms: 1,
+  population: 1000,
+  avg_occupancy: 3,
+  latitude: 34.05,
+  longitude: -118.25,
+};
 
 export default function Home() {
+  const [form, setForm] = useState<FormData>(initialForm);
+  const [result, setResult] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (key: keyof FormData, value: string) => {
+    setForm((prev) => ({ ...prev, [key]: parseFloat(value) }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/predict`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        }
+      );
+      const data = await res.json();
+      setResult(data.predicted_price);
+    } catch (err) {
+      console.error(err);
+      setResult(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <main style={{ padding: "2rem", maxWidth: "500px", margin: "0 auto" }}>
+      <h1>Homelytics — Estimateur de prix immobilier</h1>
+      <form onSubmit={handleSubmit}>
+        {Object.keys(initialForm).map((key) => (
+          <div key={key} style={{ marginBottom: "1rem" }}>
+            <label>{key}</label>
+            <input
+              type="number"
+              step="any"
+              value={form[key as keyof FormData]}
+              onChange={(e) => handleChange(key as keyof FormData, e.target.value)}
+              style={{ width: "100%", padding: "0.5rem" }}
             />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+          </div>
+        ))}
+        <button type="submit" disabled={loading}>
+          {loading ? "Calcul..." : "Estimer le prix"}
+        </button>
+      </form>
+      {result !== null && (
+        <p style={{ marginTop: "1rem", fontWeight: "bold" }}>
+          Prix estimé : ${result.toLocaleString()}
+        </p>
+      )}
+    </main>
   );
 }
