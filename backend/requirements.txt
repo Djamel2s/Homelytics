@@ -5,3 +5,6 @@ pytest
 httpx
 ruff
 prometheus-fastapi-instrumentator
+mlflow
+scikit-learn
+pandas
