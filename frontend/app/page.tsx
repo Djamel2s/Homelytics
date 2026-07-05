@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import styles from "./page.module.css";
 
 type FormData = {
   median_income: number;
@@ -24,6 +25,17 @@ const initialForm: FormData = {
   longitude: -118.25,
 };
 
+const fieldMeta: Record<keyof FormData, { label: string; unit: string }> = {
+  median_income: { label: "Revenu médian", unit: "x10 000 $" },
+  house_age: { label: "Âge des logements", unit: "années" },
+  avg_rooms: { label: "Pièces par logement", unit: "moyenne" },
+  avg_bedrooms: { label: "Chambres par logement", unit: "moyenne" },
+  population: { label: "Population du secteur", unit: "habitants" },
+  avg_occupancy: { label: "Occupants par logement", unit: "moyenne" },
+  latitude: { label: "Latitude", unit: "°" },
+  longitude: { label: "Longitude", unit: "°" },
+};
+
 export default function Home() {
   const [form, setForm] = useState<FormData>(initialForm);
   const [result, setResult] = useState<number | null>(null);
@@ -37,14 +49,11 @@ export default function Home() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/predict`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        }
-      );
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/predict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
       const data = await res.json();
       setResult(data.predicted_price);
     } catch (err) {
@@ -56,30 +65,50 @@ export default function Home() {
   };
 
   return (
-    <main style={{ padding: "2rem", maxWidth: "500px", margin: "0 auto" }}>
-      <h1>Homelytics — Estimateur de prix immobilier</h1>
-      <form onSubmit={handleSubmit}>
-        {Object.keys(initialForm).map((key) => (
-          <div key={key} style={{ marginBottom: "1rem" }}>
-            <label>{key}</label>
-            <input
-              type="number"
-              step="any"
-              value={form[key as keyof FormData]}
-              onChange={(e) => handleChange(key as keyof FormData, e.target.value)}
-              style={{ width: "100%", padding: "0.5rem" }}
-            />
+    <main className={styles.page}>
+      <div className={styles.sheet}>
+        <p className={styles.eyebrow}>Fiche d&apos;estimation</p>
+        <h1 className={styles.title}>
+          Homelytics — Estimateur de prix immobilier
+        </h1>
+
+        <form onSubmit={handleSubmit}>
+          <div className={styles.grid}>
+            {(Object.keys(initialForm) as (keyof FormData)[]).map((key) => (
+              <div key={key} className={styles.field}>
+                <label className={styles.label}>
+                  {fieldMeta[key].label}
+                  <span className={styles.unit}>
+                    {" "}
+                    ({fieldMeta[key].unit})
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={form[key]}
+                  onChange={(e) => handleChange(key, e.target.value)}
+                  className={styles.input}
+                />
+              </div>
+            ))}
           </div>
-        ))}
-        <button type="submit" disabled={loading}>
-          {loading ? "Calcul..." : "Estimer le prix"}
-        </button>
-      </form>
-      {result !== null && (
-        <p style={{ marginTop: "1rem", fontWeight: "bold" }}>
-          Prix estimé : ${result.toLocaleString()}
-        </p>
-      )}
+          <button type="submit" className={styles.button} disabled={loading}>
+            {loading ? "Calcul en cours…" : "Estimer le prix"}
+          </button>
+        </form>
+
+        {result !== null && (
+          <div className={styles.result}>
+            <p className={styles.resultLabel}>Estimation</p>
+            <div className={styles.stamp}>
+              <span className={styles.stampValue}>
+                ${result.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
     </main>
   );
 }
