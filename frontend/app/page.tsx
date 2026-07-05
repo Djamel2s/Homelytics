@@ -3,6 +3,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import styles from "./page.module.css";
+import Image from "next/image";
 
 const LocationPicker = dynamic(() => import("../components/LocationPicker"), {
   ssr: false,
@@ -60,7 +61,7 @@ function saveToHistory(form: FormData, result: number) {
   history.unshift(entry);
   localStorage.setItem(
     "homelytics_history",
-    JSON.stringify(history.slice(0, 50)) // on garde les 50 dernières
+    JSON.stringify(history.slice(0, 50)) 
   );
 }
 
@@ -100,10 +101,13 @@ export default function Home() {
   return (
     <main className={styles.page}>
       <div className={styles.sheet}>
-        <p className={styles.eyebrow}>Fiche d&apos;estimation</p>
-        <h1 className={styles.title}>
-          Homelytics — Estimateur de prix immobilier
-        </h1>
+        <div className={styles.brandRow}>
+  <Image src="/logo.svg" alt="Homelytics" width={40} height={40} />
+  <p className={styles.eyebrow}>Fiche d&apos;estimation</p>
+</div>
+<h1 className={styles.title}>
+  Homelytics — Estimateur de prix immobilier
+</h1>
 
         <form onSubmit={handleSubmit}>
           <div className={styles.field} style={{ marginBottom: "24px" }}>
