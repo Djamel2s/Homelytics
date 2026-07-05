@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import styles from "./page.module.css";
+
+const LocationPicker = dynamic(() => import("../components/LocationPicker"), {
+  ssr: false,
+});
 
 type FormData = {
   median_income: number;
@@ -25,15 +30,15 @@ const initialForm: FormData = {
   longitude: -118.25,
 };
 
-const fieldMeta: Record<keyof FormData, { label: string; unit: string }> = {
+type NumericFieldKey = Exclude<keyof FormData, "latitude" | "longitude">;
+
+const fieldMeta: Record<NumericFieldKey, { label: string; unit: string }> = {
   median_income: { label: "Revenu médian", unit: "x10 000 $" },
   house_age: { label: "Âge des logements", unit: "années" },
   avg_rooms: { label: "Pièces par logement", unit: "moyenne" },
   avg_bedrooms: { label: "Chambres par logement", unit: "moyenne" },
   population: { label: "Population du secteur", unit: "habitants" },
   avg_occupancy: { label: "Occupants par logement", unit: "moyenne" },
-  latitude: { label: "Latitude", unit: "°" },
-  longitude: { label: "Longitude", unit: "°" },
 };
 
 export default function Home() {
@@ -41,8 +46,12 @@ export default function Home() {
   const [result, setResult] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (key: keyof FormData, value: string) => {
+  const handleChange = (key: NumericFieldKey, value: string) => {
     setForm((prev) => ({ ...prev, [key]: parseFloat(value) }));
+  };
+
+  const handleLocationChange = (lat: number, lng: number) => {
+    setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,15 +82,24 @@ export default function Home() {
         </h1>
 
         <form onSubmit={handleSubmit}>
+          <div className={styles.field} style={{ marginBottom: "24px" }}>
+            <label className={styles.label}>
+              Localisation
+              <span className={styles.unit}> (clique sur la carte)</span>
+            </label>
+            <LocationPicker
+              latitude={form.latitude}
+              longitude={form.longitude}
+              onChange={handleLocationChange}
+            />
+          </div>
+
           <div className={styles.grid}>
-            {(Object.keys(initialForm) as (keyof FormData)[]).map((key) => (
+            {(Object.keys(fieldMeta) as NumericFieldKey[]).map((key) => (
               <div key={key} className={styles.field}>
                 <label className={styles.label}>
                   {fieldMeta[key].label}
-                  <span className={styles.unit}>
-                    {" "}
-                    ({fieldMeta[key].unit})
-                  </span>
+                  <span className={styles.unit}> ({fieldMeta[key].unit})</span>
                 </label>
                 <input
                   type="number"
