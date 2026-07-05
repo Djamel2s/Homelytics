@@ -4,6 +4,11 @@ on:
   push:
     branches: [staging]
 
+env:
+  MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+  MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+  MODEL_ALIAS: production
+
 jobs:
   full-test-suite:
     runs-on: ubuntu-latest
@@ -22,3 +27,116 @@ jobs:
       - name: Run full test suite
         working-directory: ./backend
         run: pytest tests/ -v
+
+  e2e:
+    needs: full-test-suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: pip install -r requirements.txt
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Install E2E dependencies
+        working-directory: ./e2e
+        run: pip install -r requirements.txt
+
+      - name: Start backend
+        working-directory: ./backend
+        run: |
+          nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:8000/health && exit 0; sleep 2; done
+          echo "Backend failed to start"; cat backend.log; exit 1
+
+      - name: Start frontend
+        working-directory: ./frontend
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+        run: |
+          nohup npm run dev > frontend.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:3000 && exit 0; sleep 2; done
+          echo "Frontend failed to start"; cat frontend.log; exit 1
+
+      - name: Run E2E tests
+        working-directory: ./e2e
+        run: pytest test_userflow.py -v
+
+  build-and-push:
+    needs: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lowercase image owner
+        run: echo "IMAGE_OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ghcr.io/${{ env.IMAGE_OWNER }}/homelytics-backend:staging
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ghcr.io/${{ env.IMAGE_OWNER }}/homelytics-frontend:staging
+
+  deploy-staging:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Render (staging)
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_STAGING != '' }}
+        run: curl -sf -X POST "${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}"
+
+  train-and-evaluate:
+    needs: full-test-suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install data pipeline dependencies
+        run: pip install -r data/requirements.txt
+
+      - name: Pull dataset (DVC)
+        run: |
+          dvc remote modify origin --local auth basic
+          dvc remote modify origin --local user "$MLFLOW_TRACKING_USERNAME"
+          dvc remote modify origin --local password "$MLFLOW_TRACKING_PASSWORD"
+          dvc pull
+
+      - name: Train model
+        run: python data/train.py
+
+      - name: Evaluate model (quality gate, sets 'staging' alias if it passes)
+        run: python data/evaluate.py
