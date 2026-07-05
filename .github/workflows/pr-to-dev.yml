@@ -19,6 +19,10 @@ jobs:
         working-directory: ./backend
         run: pip install -r requirements.txt
 
+      - name: Run ruff
+        working-directory: ./backend
+        run: ruff check .
+
       - name: Run unit tests
         working-directory: ./backend
         run: pytest tests/unit -v
