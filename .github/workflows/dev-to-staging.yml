@@ -107,14 +107,15 @@ jobs:
           tags: ghcr.io/${{ env.IMAGE_OWNER }}/homelytics-frontend:staging
 
   deploy-staging:
-    needs: build-and-push
+    needs: [build-and-push, train-and-evaluate]
     runs-on: ubuntu-latest
-    env:
-      RENDER_DEPLOY_HOOK_STAGING: ${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}
+    environment: staging
     steps:
-      - name: Deploy to Render (staging)
-        if: ${{ env.RENDER_DEPLOY_HOOK_STAGING != '' }}
-        run: curl -sf -X POST "$RENDER_DEPLOY_HOOK_STAGING"
+      - name: Deploy backend to staging
+        run: curl -sf -X POST "${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}"
+
+      - name: Deploy frontend to staging
+        run: curl -sf -X POST "${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}"
 
   train-and-evaluate:
     needs: full-test-suite
