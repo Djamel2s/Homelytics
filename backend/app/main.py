@@ -1,21 +1,12 @@
 import os
+from contextlib import asynccontextmanager
+
 import pandas as pd
 import mlflow
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from prometheus_fastapi_instrumentator import Instrumentator
-
-app = FastAPI(title="Homelytics API")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-Instrumentator().instrument(app).expose(app)
 
 MLFLOW_TRACKING_URI = os.environ.get(
     "MLFLOW_TRACKING_URI", "https://dagshub.com/djamelofficiel.pro/homelytics.mlflow"
@@ -28,11 +19,24 @@ mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 model = None
 
 
-@app.on_event("startup")
-def load_model():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     global model
     model_uri = f"models:/{MODEL_NAME}/{MODEL_STAGE}"
     model = mlflow.pyfunc.load_model(model_uri)
+    yield
+
+
+app = FastAPI(title="Homelytics API", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+Instrumentator().instrument(app).expose(app)
 
 
 class PredictionRequest(BaseModel):

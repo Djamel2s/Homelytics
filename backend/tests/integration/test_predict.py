@@ -1,9 +1,4 @@
-from fastapi.testclient import TestClient
-from app.main import app
-
-client = TestClient(app)
-
-def test_predict_endpoint():
+def test_predict_endpoint(client):
     payload = {
         "median_income": 5,
         "house_age": 20,
