@@ -25,10 +25,18 @@ jobs:
 
       - name: Run unit tests
         working-directory: ./backend
+        env:
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+          MODEL_STAGE: "None"
         run: pytest tests/unit -v
 
       - name: Run integration tests
         working-directory: ./backend
+        env:
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+          MODEL_STAGE: "None"
         run: pytest tests/integration -v
 
       - name: Build backend Docker image
