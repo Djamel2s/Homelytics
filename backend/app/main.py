@@ -14,6 +14,12 @@ MLFLOW_TRACKING_URI = os.environ.get(
 MODEL_ALIAS = os.environ.get("MODEL_ALIAS", "production")
 MODEL_NAME = "homelytics-price-model"
 
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
+
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
 model = None
@@ -31,7 +37,7 @@ app = FastAPI(title="Homelytics API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
