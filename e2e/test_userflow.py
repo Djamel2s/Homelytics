@@ -24,8 +24,16 @@ def test_user_can_get_price_prediction():
     try:
         driver.get(FRONTEND_URL)
 
+        wait = WebDriverWait(driver, 10)
+        wait.until(
+            EC.presence_of_element_located((By.CLASS_NAME, "leaflet-container"))
+        )
+
         inputs = driver.find_elements(By.CSS_SELECTOR, "input[type='number']")
-        assert len(inputs) == 8, "Le formulaire doit avoir 8 champs"
+        assert len(inputs) == 6, (
+            "Le formulaire doit avoir 6 champs numeriques "
+            "(latitude/longitude sont renseignees via la carte)"
+        )
 
         submit_button = driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
         submit_button.click()

@@ -23,7 +23,7 @@ jobs:
         env:
           MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
-        run: python data/verify_production_model.py
+        run: python data/verify.py
 
       - name: Deploy backend to production
         run: curl -sf -X POST "${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}"
