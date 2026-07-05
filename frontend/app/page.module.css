@@ -163,3 +163,24 @@
   .grid { grid-template-columns: 1fr; }
   .title { font-size: 26px; }
 }
+
+.mapWrapper {
+  border: 1px solid var(--cyan-dim);
+  overflow: hidden;
+}
+
+.addressCaption {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--cyan);
+  padding: 8px 10px;
+  margin: 0;
+  border-top: 1px solid var(--cyan-dim);
+}
+
+
+.mapWrapper :global(.leaflet-control-attribution) {
+  background: rgba(8, 20, 34, 0.8) !important;
+  color: var(--cyan-dim) !important;
+  font-size: 10px !important;
+}
