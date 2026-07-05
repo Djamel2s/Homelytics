@@ -109,10 +109,12 @@ jobs:
   deploy-staging:
     needs: build-and-push
     runs-on: ubuntu-latest
+    env:
+      RENDER_DEPLOY_HOOK_STAGING: ${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}
     steps:
       - name: Deploy to Render (staging)
-        if: ${{ secrets.RENDER_DEPLOY_HOOK_STAGING != '' }}
-        run: curl -sf -X POST "${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}"
+        if: ${{ env.RENDER_DEPLOY_HOOK_STAGING != '' }}
+        run: curl -sf -X POST "$RENDER_DEPLOY_HOOK_STAGING"
 
   train-and-evaluate:
     needs: full-test-suite
