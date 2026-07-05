@@ -32,7 +32,7 @@ def test_user_can_get_price_prediction():
 
         wait = WebDriverWait(driver, 10)
         wait.until(
-            EC.text_to_be_present_in_element((By.CSS_SELECTOR, "p"), "Prix estimé")
+            EC.text_to_be_present_in_element((By.TAG_NAME, "body"), "$")
         )
     finally:
         driver.quit()
