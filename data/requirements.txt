@@ -2,3 +2,4 @@ scikit-learn
 pandas
 dvc
 dvc-s3
+mlflow
