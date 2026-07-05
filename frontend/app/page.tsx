@@ -41,6 +41,29 @@ const fieldMeta: Record<NumericFieldKey, { label: string; unit: string }> = {
   avg_occupancy: { label: "Occupants par logement", unit: "moyenne" },
 };
 
+type HistoryEntry = {
+  id: string;
+  timestamp: string;
+  form: FormData;
+  result: number;
+};
+
+function saveToHistory(form: FormData, result: number) {
+  const entry: HistoryEntry = {
+    id: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    form,
+    result,
+  };
+  const raw = localStorage.getItem("homelytics_history");
+  const history: HistoryEntry[] = raw ? JSON.parse(raw) : [];
+  history.unshift(entry);
+  localStorage.setItem(
+    "homelytics_history",
+    JSON.stringify(history.slice(0, 50)) // on garde les 50 dernières
+  );
+}
+
 export default function Home() {
   const [form, setForm] = useState<FormData>(initialForm);
   const [result, setResult] = useState<number | null>(null);
@@ -65,6 +88,7 @@ export default function Home() {
       });
       const data = await res.json();
       setResult(data.predicted_price);
+      saveToHistory(form, data.predicted_price);
     } catch (err) {
       console.error(err);
       setResult(null);
