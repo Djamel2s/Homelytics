@@ -26,7 +26,10 @@ def main():
     latest = get_latest_version(client, MODEL_NAME)
     print(f"Evaluating {MODEL_NAME} version {latest.version} (run_id={latest.run_id})")
 
-    model = mlflow.pyfunc.load_model(f"models:/{MODEL_NAME}/{latest.version}")
+    client.set_registered_model_alias(MODEL_NAME, "staging", latest.version)
+    print(f"Alias 'staging' set on version {latest.version}")
+
+    model = mlflow.pyfunc.load_model(f"models:/{MODEL_NAME}@staging")
 
     df = pd.read_csv("data/california_housing.csv")
     X = df.drop(columns=["MedHouseVal"])
@@ -38,11 +41,11 @@ def main():
     print(f"R2 score: {r2:.4f}")
 
     if not check_quality_gate(r2):
-        print(f"Quality gate FAILED (R2 < {R2_THRESHOLD})")
+        print(f"Quality gate FAILED (R2 < {R2_THRESHOLD}) — model stays in Staging.")
         sys.exit(1)
 
-    client.set_registered_model_alias(MODEL_NAME, "staging", latest.version)
-    print(f"Quality gate PASSED — alias 'staging' set on version {latest.version}")
+    client.set_registered_model_alias(MODEL_NAME, "production", latest.version)
+    print(f"Quality gate PASSED — alias 'production' set on version {latest.version}")
 
 
 if __name__ == "__main__":

@@ -7,5 +7,26 @@ on:
 jobs:
   deploy-production:
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install MLflow client
+        run: pip install mlflow
+
+      - name: Verify a model version has the production alias
+        env:
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+        run: python data/verify_production_model.py
+
+      - name: Deploy backend to production
+        run: curl -sf -X POST "${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}"
+
+      - name: Deploy frontend to production
+        run: curl -sf -X POST "${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}"
