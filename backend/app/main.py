@@ -11,7 +11,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 MLFLOW_TRACKING_URI = os.environ.get(
     "MLFLOW_TRACKING_URI", "https://dagshub.com/djamelofficiel.pro/homelytics.mlflow"
 )
-MODEL_STAGE = os.environ.get("MODEL_STAGE", "None")
+MODEL_ALIAS = os.environ.get("MODEL_ALIAS", "production")
 MODEL_NAME = "homelytics-price-model"
 
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
@@ -22,7 +22,7 @@ model = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global model
-    model_uri = f"models:/{MODEL_NAME}/{MODEL_STAGE}"
+    model_uri = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
     model = mlflow.pyfunc.load_model(model_uri)
     yield
 
