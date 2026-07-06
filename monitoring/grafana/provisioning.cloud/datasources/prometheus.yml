@@ -5,5 +5,5 @@ datasources:
     type: prometheus
     uid: prometheus
     access: proxy
-    url: https://homelytics-prometheus.onrender.com
+    url: ${PROMETHEUS_URL}
     isDefault: true
