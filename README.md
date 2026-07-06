@@ -156,7 +156,7 @@ The backend exposes its metrics on `/metrics` (via `prometheus-fastapi-instrumen
 
 The Grafana dashboard (`monitoring/grafana/provisioning/`) is **provisioned automatically** (no manual configuration) with 4 panels: request volume, `/predict` latency, error rate, backend health status.
 
-> Currently, the monitoring stack (Prometheus + Grafana) only runs locally via `docker-compose`. The production backend's `/metrics` endpoint itself, however, is publicly exposed.
+The monitoring stack also runs locally via `docker-compose`, and is additionally deployed to Render to monitor the real production backend continuously (see [Deployment](#deployment)).
 
 ## Deployment
 
@@ -166,6 +166,11 @@ Hosted on [Render](https://render.com), with separate services for `staging` and
 |---|---|
 | Staging | https://homelytics-frontend-staging.onrender.com |
 | Production | https://homelytics-frontend-production.onrender.com |
+
+| Monitoring | URL |
+|---|---|
+| Grafana | https://homelytics-grafana.onrender.com |
+| Prometheus | https://homelytics-prometheus.onrender.com |
 
 Deployment is triggered automatically by the CI/CD workflows via Render "deploy hooks" (GitHub Actions secrets).
 
@@ -178,3 +183,7 @@ Deployment is triggered automatically by the CI/CD workflows via Render "deploy 
 | `MODEL_ALIAS` | backend | Model alias to load (`production` by default, `staging` for testing) |
 | `ALLOWED_ORIGINS` | backend | Allowed CORS origins (comma-separated list) |
 | `NEXT_PUBLIC_API_URL` | frontend | Backend URL called by the form |
+| `FRONTEND_URL` | e2e | Frontend URL the Selenium test drives (defaults to `http://localhost:3000`) |
+| `BACKEND_PORT` / `FRONTEND_PORT` / `PROMETHEUS_PORT` / `GRAFANA_PORT` | docker-compose | Local port overrides for each service (see [Getting started](#getting-started-local)) |
+| `BACKEND_TARGET` | monitoring/prometheus (cloud) | Backend hostname Prometheus scrapes in prod, e.g. `homelytics-backend-production.onrender.com` |
+| `PROMETHEUS_URL` | monitoring/grafana (cloud) | Prometheus URL Grafana's datasource points to in prod, e.g. `https://homelytics-prometheus.onrender.com` |
