@@ -8,3 +8,4 @@ prometheus-fastapi-instrumentator
 mlflow
 scikit-learn
 pandas
+python-dotenv

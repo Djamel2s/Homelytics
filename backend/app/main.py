@@ -3,10 +3,13 @@ from contextlib import asynccontextmanager
 
 import pandas as pd
 import mlflow
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from prometheus_fastapi_instrumentator import Instrumentator
+
+load_dotenv()
 
 MLFLOW_TRACKING_URI = os.environ.get(
     "MLFLOW_TRACKING_URI", "https://dagshub.com/djamelofficiel.pro/homelytics.mlflow"

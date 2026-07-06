@@ -5,4 +5,4 @@ scrape_configs:
   - job_name: backend
     scheme: https
     static_configs:
-      - targets: ["homelytics-backend-production.onrender.com"]
+      - targets: ["__BACKEND_TARGET__"]
